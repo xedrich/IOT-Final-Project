@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IOT Dashboard</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        .header {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #3498db;
+            color: #fff;
+            padding: 10px;
+            font-size: 18px;
+        }
+
+        .location {
+            margin-top: 10px;
+            color: #666;
+        }
+
+        .instruments-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            padding: 20px;
+        }
+
+        .instrument {
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        margin: 10px;
+        height: 250px; /* Set a fixed height for all instrument divs */
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+        .thermometer, .gauge, .fan {
+            width: 100px;
+            height: 200px;
+            margin: 10px auto;
+        }
+
+        .temperature-level, .humidity-arrow, .fan-status {
+            background-color: #3498db;
+            height: 50%;
+            width: 100%;
+            position: relative;
+            border-radius: 10px;
+        }
+
+        .temperature-value, .humidity-value {
+            font-size: 24px;
+            color: #333;
+            margin-top: 10px;
+        }
+
+        .led-container, .fan-container {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .led, .led-image, .fan-image {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            margin-top: 10px;
+        }
+
+        .toggle-button, .fan-toggle-button {
+            padding: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #3498db;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+
+        .date-time {
+            color: #666;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Welcome</h1>
+    </div>
+    <p id="dateTime"></p>
+    <div class="location">
+        <p>Location: <span id="location">Canada, Quebec</span></p>
+    </div>
+
+    <div class="instruments-container">
+        <div class="instrument">
+            <p>Temperature</p>
+            <div class="thermometer">
+                <div class="temperature-level" id="temperatureLevel"></div>
+                
+            </div>
+            <p class="temperature-value" id="temperatureValue">0°C</p>
+        </div>
+        <div class="instrument">
+            <p>Humidity</p>
+            <div class="gauge">
+                <div class="humidity-arrow" id="humidityArrow"></div>
+                
+            </div>
+            <p class="humidity-value" id="humidityValue">0%</p>
+        </div>
+        <div class="instrument">
+            <div class="fan-container">
+                <img id="fanImage" class="fan-image" src="/static/Fanoff.png" alt="Fan Image">
+                <p>Fan Status: <span id="fanStatus">OFF</span></p>
+                <button class="toggle-button" onclick="toggleFan()">Toggle Fan</button>
+            </div>
+        </div>
+        
+        <div class="instrument">
+            <p>Light Intensity</p>
+            <div class="photoresistor">
+                <img id="fanImage" class="fan-image" src="/static/lightintensity.png" alt="Fan Image">
+                <p id="photoresistorValue">{{ light_intensity }}</p>
+            </div>
+        </div>
+        
+    </div>
+
+    <div class="led-container">
+        <img id="ledImage" class="led-image" src="/static/Lightsoff.png" alt="LED Image">
+        <p>LED Status: <span id="ledStatus">OFF</span></p>
+        <button class="toggle-button" onclick="toggleLed()">Toggle LED</button>
+    </div>
+
+   
+</div>
+
+
+    <script>
+        function updateDateTime() {
+            const now = new Date();
+            const dateTimeElement = document.getElementById('dateTime');
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', timeZoneName: 'short' };
+            dateTimeElement.textContent = now.toLocaleDateString('en-US', options);
+        }
+
+        function updateGauges() {
+    // Fetch sensor data from the server
+    fetch('/get_sensor_data')
+        .then(response => response.json())
+        .then(data => {
+            // Update temperature display
+            document.getElementById('temperatureLevel').style.height = data.temperature * 2 + 'px';
+            document.getElementById('temperatureValue').textContent = data.temperature + '°C';
+
+            // Update humidity display
+            document.getElementById('humidityArrow').style.transform = `rotate(${data.humidity * 1.8 - 90}deg)`;
+            document.getElementById('humidityValue').textContent = data.humidity + '%';
+
+            // Update light intensity display
+            document.getElementById('photoresistorValue').textContent = data.light_intensity;
+        })
+        .catch(error => console.error('Error:', error));
+}
+
+
+        // function updateFanStatus() {
+        //     // Fetch fan status from the server
+        //     fetch('/get_fan_status')
+        //         .then(response => response.json())
+        //         .then(data => {
+        //             // Update fan status
+        //             document.getElementById('fanStatus').textContent = data.fan_status;
+
+        //             // Update fan status image
+        //             const fanImage = document.getElementById('fanImage');
+        //             fanImage.src = `/static/${data.fan_status.toLowerCase()}.png`;
+        //         })
+        //         .catch(error => console.error('Error:', error));
+        // }
+
+        function updateLedStatus() {
+            // Fetch LED status from the server
+            fetch('/get_led_status')
+                .then(response => response.json())
+                .then(data => {
+                    // Update LED status
+                    document.getElementById('ledStatus').textContent = data.led_state ? 'ON' : 'OFF';
+
+                    // Update LED image
+                    const ledImage = document.getElementById('ledImage');
+                    ledImage.src = data.led_state ? '/static/Lightson.png' : '/static/Lightsoff.png';
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        function toggleLed() {
+            // Toggle the LED status
+            fetch('/toggle_led', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    // Update LED status
+                    document.getElementById('ledStatus').textContent = data.led_state ? 'ON' : 'OFF';
+
+                    // Update LED image based on status
+                    const ledImage = document.getElementById('ledImage');
+                    ledImage.src = data.led_state ? '/static/Lightson.png' : '/static/Lightsoff.png';
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        
+        function toggleFan() {
+    // Update fan status and image on the client side
+    const fanImage = document.getElementById('fanImage');
+    const fanStatus = document.getElementById('fanStatus');
+
+    // Get the current fan status from the text content
+    const isFanOn = fanStatus.textContent === 'ON';
+
+    // Toggle the fan status and update the image accordingly
+    if (isFanOn) {
+        fanImage.src = '/static/Fanoff.png';
+        fanStatus.textContent = 'OFF';
+    } else {
+        fanImage.src = '/static/Fanon.png';
+        fanStatus.textContent = 'ON';
+    }
+}
+
+        // Update gauges, fan status, and LED status every 2 seconds
+        setInterval(updateGauges, 2000);
+        //setInterval(updateFanStatus, 2000);
+        setInterval(updateLedStatus, 2000);
+        setInterval(updateDateTime, 1000);
+
+        // Initial update
+        updateGauges();
+        //updateFanStatus();
+        updateLedStatus();
+        updateDateTime();
+    </script>
+</body>
+</html>

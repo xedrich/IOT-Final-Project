@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>DHT11 Sensor Data</title>
+    <style>
+        .instruments-container {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .instrument {
+            text-align: center;
+        }
+
+        .thermometer {
+            width: 20px;
+            height: 200px;
+            background-color: #ccc;
+            position: relative;
+            border-radius: 10px;
+        }
+
+        .temperature-level {
+            width: 100%;
+            height: 40%;
+            background: linear-gradient(to bottom, #f06, #06f);
+            position: absolute;
+            bottom: 0;
+        }
+
+        .temperature-value {
+            text-align: center;
+            font-size: 24px;
+            color: #333;
+            margin-top: 20px;
+        }
+
+        .gauge {
+            width: 200px;
+            height: 200px;
+            position: relative;
+            border-radius: 50%;
+            background-color: #ccc;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .humidity-arrow {
+            width: 5px;
+            height: 100px;
+            background-color: #333;
+            transform-origin: 50% 100%;
+            transform: rotate(0deg);
+        }
+
+        .humidity-value {
+            font-size: 24px;
+            color: #333;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>DHT11 Sensor Data</h1>
+    <div class="instruments-container">
+        <div class="instrument">
+            <p>Temperature</p>
+            <div class="thermometer">
+                <div class="temperature-level" id="temperatureLevel"></div>
+                <p class="temperature-value" id="temperatureValue">0°C</p>
+            </div>
+        </div>
+        <div class="instrument">
+            <p>Humidity</p>
+            <div class="gauge">
+                <div class="humidity-arrow" id="humidityArrow"></div>
+                <p class="humidity-value" id="humidityValue">0%</p>
+            </div>
+        </div>
+    </div>
+    <p>Fan Status: <span id="fanStatus">OFF</span></p>
+
+    <script>
+        function updateGauges() {
+            // Fetch sensor data from the server
+            fetch('/get_sensor_data')
+                .then(response => response.json())
+                .then(data => {
+                    // Update temperature display
+                    document.getElementById('temperatureLevel').style.height = data.temperature * 2 + 'px';
+                    document.getElementById('temperatureValue').textContent = data.temperature + '°C';
+
+                    // Update humidity display
+                    document.getElementById('humidityArrow').style.transform = `rotate(${data.humidity * 1.8 - 90}deg)`;
+                    document.getElementById('humidityValue').textContent = data.humidity + '%';
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        function updateFanStatus() {
+            // Fetch fan status from the server
+            fetch('/get_fan_status')
+                .then(response => response.json())
+                .then(data => {
+                    // Update fan status
+                    document.getElementById('fanStatus').textContent = data.fan_status;
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        // Update gauges and fan status every 2 seconds
+        setInterval(updateGauges, 2000);
+        setInterval(updateFanStatus, 2000);
+
+        // Initial update
+        updateGauges();
+        updateFanStatus();
+    </script>
+</body>
+</html>
